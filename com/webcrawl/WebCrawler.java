@@ -19,6 +19,7 @@ public class WebCrawler{
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1";
     //List to hold all the links in the document
     private List<String> WebLinks = new LinkedList<String>();
+    private List<String> ChosenChapterLinks = new LinkedList<String>();
     //HTML Document from jsoup connection get
     private Document HTMLDoc;
     //The writer for the lgo
@@ -28,104 +29,92 @@ public class WebCrawler{
     private String ChapterRegexPattern;
     private String PageRegexPattern;
 
+    private String CurrentMangaName;
     
     /** 
     *WebCrawler constructor
-    *Initialize the writer for the log
-    *@param logPath - the path to the log text file
-    **/
-    WebCrawler(String logPath){
+    */
+    WebCrawler(){
         super();
-        try{
-        	FileWriter logWriter = new FileWriter(logPath,true);
-        	BufferedWriter buffWriter = new BufferedWriter(logWriter);
-        	PrintWriter logPrinter = new PrintWriter(buffWriter);        	
-            this.LogPrinter = logPrinter;
-        }
-        catch(IOException ex){
-            System.out.println(ex);
-        }
     }
 
     /**
-    *@param pattern - the regex pattern of the url to get the manga name
-    **/
+    *Initialize the writer for the log
+    *@param LogPath the path to write the log file
+    */
+    public void InitializeLogFile(String LogPath){
+        try{
+            FileWriter logWriter = new FileWriter(LogPath,true);
+            BufferedWriter buffWriter = new BufferedWriter(logWriter);
+            PrintWriter logPrinter = new PrintWriter(buffWriter);           
+            this.LogPrinter = logPrinter;
+            System.out.println("Log initialized");
+        }
+        catch(IOException ex){
+            System.out.println(ex);
+        }        
+    }
+
+    /**
+    *@param pattern the regex pattern of the url to get the manga name
+    */
     public void SetMangaNamePattern(String pattern){
         this.MangaNameRegexPattern = pattern;
     }
 
     /**
-    *@param pattern - the regex pattern of the url to get the manga name
-    **/
+    *@param pattern the regex pattern of the url to get the manga name
+    */
     public void SetMangaChapterPattern(String pattern){
         this.ChapterRegexPattern = pattern;
     }
 
-        /**
-    *@param pattern - the regex pattern of the url to get the manga name
-    **/
+    /**
+    *@param pattern the regex pattern of the url to get the manga name
+    */
     public void SetMangaPagePattern(String pattern){
         this.PageRegexPattern = pattern;
     }
 
-    private String getDirFromURL(String url){
-        String finalDir = "";
-        String[] urlParts = url.split("://");
-        if(urlParts.length > 1){
-            String filePath = urlParts[1];
-            String[] dirs = filePath.split("/");
-            int i;
-            for(i=0;i< dirs.length - 1;i++){
-                finalDir += dirs[i];
-                finalDir += '/';
-            }
-            finalDir.replaceAll(".", "");
-            finalDir.replaceAll(" ", "");
-            System.out.println(finalDir);
-            this.PrintToLog(finalDir);
-            return finalDir;
-        }
-        return finalDir; 
+    /**
+    *@param TheURL the link to test
+    *@param MangaName the manga name
+    *@return whether or not the url is the link to the mange chapter
+    */
+    public boolean isURLForMangaChapter(String TheURL){
+        //Debug Code
+        System.out.println("URL : " + TheURL + this.isChapterLink(TheURL));
+        //Debug Code
+        return TheURL.contains(this.CurrentMangaName) && this.isChapterLink(TheURL);
     }
 
-    private String getFileNameFromURL(String url){
-        String fileName = "";
-        String[] urlParts = url.split("://");
-        if(urlParts.length > 1){
-            String filePath = urlParts[1];
-            String[] dirs = filePath.split("/");
-            int length = dirs.length;
-            fileName += dirs[length-1];
-            fileName.replaceAll("\\s+", "");
-            String[] absoluteURL = fileName.split("\\?");
-            String absFileName = absoluteURL[0];
-            System.out.println(absFileName);
-            this.PrintToLog(absFileName);
-            return absFileName;
-        }
-        return fileName; 
-    }
-
-    public boolean isURLForMangaChapter(String URL,String MangaName){
-        System.out.println("URL : " + URL + this.isChapterLink(URL));
-        return URL.contains(MangaName) && this.isChapterLink(URL);
-    }
-
-    public boolean isURLPartOfNextMangaPage(String URL, String Chapter, String Page){
+    /**
+    *@param BaseURL the link to test
+    *@return whether or not the url is the link to the next page in the chapter
+    */
+    public boolean isURLPartOfNextMangaPage(String BaseURL, String URLToTest){
         String nextPage;
 
-        if(Page != ""){
-             nextPage = Integer.toString(Integer.parseInt(Page) + 1);
+        String currentChapter = this.getChapterFromURL(BaseURL);
+        String currentPage = this.getPageFromURL(BaseURL);
+
+        if(currentPage != ""){
+             nextPage = Integer.toString(Integer.parseInt(currentPage) + 1);
         }
         else{
             nextPage = "";
         }
-        String patternToFind = Chapter + '/' + nextPage;
-        return URL.contains(patternToFind); 
+        String patternToFind = currentChapter + '/' + nextPage;
+        return URLToTest.contains(patternToFind); 
     }
 
-    public boolean isImageOfMangaPage(Element theImage){
-        Element parentElement = theImage.parent();
+    /**
+    *check whether or not current element image is of the manga page
+    *@param TheImage the image element 
+    *@return whether or not the image element is of the manga page
+    */
+    public boolean isImageOfMangaPage(Element TheImage){
+        Element parentElement = TheImage.parent();
         if(parentElement != null){
             if(parentElement.className() != null){
                 System.out.println(parentElement.className());
@@ -139,16 +128,18 @@ public class WebCrawler{
     }
 
     /**
-    *@param ImgURL - the absolute url to the image to be saved
-    *@param MangaName - Manga name as folder name
-    *@param Chapter - Chapter number as folder name
-    **/
+    *@param PageURL the current page URL to get the current chapter and page
+    *@param ImgURL the absolute url to the image to be saved
+    *@param MangaName Manga name as folder name
+    *@param Chapter Chapter number as folder name
+    */
     public boolean isImageSaveSuccessful(String PageURL, String ImgURL){
         try{
             //String fileName = this.getFileNameFromURL(ImgURL);
             //String fileDir = this.getDirFromURL(ImgURL);
 
-            String mangaName = this.getNameFromURL(PageURL);
+            //String mangaName = this.getNameFromURL(PageURL);
+            String mangaName = this.CurrentMangaName;
             String mangaChapter = this.getChapterFromURL(PageURL);
             String fileName = this.getPageFromURL(PageURL) + ".jpg";
 
@@ -175,21 +166,26 @@ public class WebCrawler{
         return true;
     }
 
-    public boolean isSearchForChaptersSuccessful(String URL){
+    /**
+    *@param TheURL the base url to search all the links to the chapters
+    *@return whether or not chapter crawl was successful
+    */
+    public boolean isSearchForChaptersSuccessful(String TheURL){
         try{
-            Connection connection = Jsoup.connect(URL).userAgent(USER_AGENT);
+            Connection connection = Jsoup.connect(TheURL).userAgent(USER_AGENT);
             Document htmlDoc = connection.get();
             this.HTMLDoc = htmlDoc;
             if(connection.response().statusCode() == 200){
                 if(connection.response().contentType().contains("text/html")){
-                    /**
-                    *Begin searching for next page of the current chapter
-                    **/
+
+                    this.CurrentMangaName = this.getNameFromURL(TheURL);
+
+                    //Begin searching for next page of the current chapter
                     Elements linksOnPage = htmlDoc.select("a[href]");
 
                     for(Element link : linksOnPage){
                         String absURL = link.absUrl("href");
-                        if(this.isURLForMangaChapter(absURL,this.getNameFromURL(URL))){
+                        if(this.isURLForMangaChapter(absURL)){
                             System.out.println("Chapter" + absURL);
                             this.isCrawlForImageSuccessful(absURL);
                         }
@@ -197,7 +193,9 @@ public class WebCrawler{
                     return true;
                 }
                 else{
-                    this.LogPrinter.println("**Failure** Retreived something other than HTML");
+                    //Debug code
+                    this.PrintToLog("**Failure** Retreived something other than HTML");
+                    //Debug code
                     return false;
                 }
             }
@@ -209,47 +207,52 @@ public class WebCrawler{
     }
 
     /**
-    *@param urlThe url to search for all the images
+    *@param TheURL The url to search for all the images
     *@return whether or not image elements are succesfully searched for
-    **/
-    public boolean isCrawlForImageSuccessful(String url){
+    */
+    public boolean isCrawlForImageSuccessful(String TheURL){
         try{
-            Connection connection = Jsoup.connect(url).userAgent(USER_AGENT);
+            Connection connection = Jsoup.connect(TheURL).userAgent(USER_AGENT);
             Document htmlDoc = connection.get();
             this.HTMLDoc = htmlDoc;
             if(connection.response().statusCode() == 200){
 
-                System.out.println("\n**Visiting** Received web page at " + url);
+                System.out.println("\n**Visiting** Received web page at " + TheURL);
                 if(connection.response().contentType().contains("text/html")){
 
-                    /**
-                    *Begin searching for page image 
-                    **/                  
+                    //List all images element in current page            
                     Elements imagesOnPage = htmlDoc.select("img");
                     
+                    //Debug code   
                     System.out.println("Found (" + imagesOnPage.size() + ") images");
-                    this.LogPrinter.println(this.getNameFromURL(url) + " chapter" +  this.getChapterFromURL(url));
-                    
+                    //Debug code
+
                     for(Element image : imagesOnPage){
                         if(this.isImageOfMangaPage(image)){
                             String imgURL = image.absUrl("src");
-                            this.LogPrinter.println(imgURL);
-                            if(this.isImageSaveSuccessful(url, imgURL)){
+                            this.PrintToLog(imgURL);
+                            if(this.isImageSaveSuccessful(TheURL, imgURL)){
+                                //Debug code
                                 System.out.println("\n**Succesfully Saved Image**" + imgURL);
+                                //Debug code
                             }
                         }
                     }
 
                     /**
                     *Begin searching for next page of the current chapter
-                    **/
+                    */
                     Elements linksOnPage = htmlDoc.select("a[href]");
 
                     for(Element link : linksOnPage){
-                        String absURL = link.absUrl("href");
-                        if(this.isURLPartOfNextMangaPage(absURL,this.getChapterFromURL(url),this.getPageFromURL(url))){
-                            System.out.println("Crawling to" + absURL);
-                            if(this.isCrawlForImageSuccessful(absURL)){
+                        String chapterLink = link.absUrl("href");
+                        if(this.isURLPartOfNextMangaPage(TheURL, chapterLink)){
+                            
+                            //Debug code
+                            System.out.println("Crawling to" + chapterLink);
+                            //Debug code
+                            
+                            if(this.isCrawlForImageSuccessful(chapterLink)){
                             }
                             break;
                         }
@@ -258,7 +261,7 @@ public class WebCrawler{
                     return true;
                 }
                 else{
-                    this.LogPrinter.println("**Failure** Retreived something other than HTML");
+                    this.PrintToLog("**Failure** Retreived something other than HTML");
                     return false;
                 }
             }
@@ -270,17 +273,17 @@ public class WebCrawler{
     }
 
     /**
-    *@param urlThe url to search for all the links to other pages
+    *@param TheURL The url to search for all the links to other pages
     *@return whether or not the crawl is successful
-    **/
-    public boolean isCrawlSuccessful(String url){
+    */
+    public boolean isCrawlSuccessful(String TheURL){
     	try{
-    	    Connection connection = Jsoup.connect(url).userAgent(USER_AGENT);
+    	    Connection connection = Jsoup.connect(TheURL).userAgent(USER_AGENT);
     	    Document htmlDoc = connection.get();
     	    this.HTMLDoc = htmlDoc;
     	    if(connection.response().statusCode() == 200){
 
-                System.out.println("\n**Visiting** Received web page at " + url);
+                System.out.println("\n**Visiting** Received web page at " + TheURL);
                 if(connection.response().contentType().contains("text/html")){
                 	
                     Elements linksOnPage = htmlDoc.select("a[href]");
@@ -289,13 +292,13 @@ public class WebCrawler{
                     
                     for(Element link : linksOnPage){
                     	this.WebLinks.add(link.absUrl("href"));
-                    	this.LogPrinter.println(link.absUrl("href"));
+                    	this.PrintToLog(link.absUrl("href"));
                         System.out.println(link.absUrl("href"));
                     }
                     return true;
                 }
                 else{
-                	this.LogPrinter.println("**Failure** Retreived something other than HTML");
+                	this.PrintToLog("**Failure** Retreived something other than HTML");
                     return false;
                 }
             }
@@ -308,38 +311,43 @@ public class WebCrawler{
 
     /**
     *Performs the search on the html document
-    *@param searchWord - the word or string to be searched
+    *@param SearchWord the word or string to be searched
     *@return whether or not the word was found
-    **/
-    public boolean isWordFound(String searchWord){
+    */
+    public boolean isWordFound(String SearchWord){
     	if(this.HTMLDoc == null){
     		System.out.println("Error! call crawl() before performing search");
     		return false;
     	}
     	System.out.println("Searching for the word");
     	String bodyText = this.HTMLDoc.body().text();
-    	return bodyText.toLowerCase().contains(searchWord.toLowerCase());
+    	return bodyText.toLowerCase().contains(SearchWord.toLowerCase());
     }
 
     /**
-    *@url - the url to get the chapter from
+    *@param TheURL the url to get the chapter from
     *@return the chapter
-    **/
-    public String getPageFromURL(String URL){
+    */
+    public String getPageFromURL(String TheURL){
         //String mangaPattern = "c\\d+\\/(\\d+)";
-        String mangaPattern = this.PageRegexPattern;         
-        Pattern page = Pattern.compile(mangaPattern);
-        Matcher m = page.matcher(URL);
+        String pagePattern = this.PageRegexPattern;         
+        Pattern page = Pattern.compile(pagePattern);
+        Matcher m = page.matcher(TheURL);
         if(m.find() && m.groupCount() > 0){
             return m.group(1);
         }
         return "";
     }
 
-    public boolean isChapterLink(String URL){
-        String mangaPattern = "\\/c\\d+";          
-        Pattern chapter = Pattern.compile(mangaPattern);
-        Matcher m = chapter.matcher(URL);
+    /**
+    *@param TheURL the URL to check whether or not it is link to the chapter
+    *@return whether or not the passed link is link to chapter
+    */
+    public boolean isChapterLink(String TheURL){
+        //String mangaPattern = "\\/c\\d+";          
+        String chapterPattern = this.ChapterRegexPattern;
+        Pattern chapter = Pattern.compile(chapterPattern);
+        Matcher m = chapter.matcher(TheURL);
         if(m.find()){
             return true;
         }
@@ -347,14 +355,14 @@ public class WebCrawler{
     }
 
     /**
-    *@url - the url to get the chapter from
+    *@param TheURL the url to get the chapter from
     *@return the chapter
-    **/
-    public String getChapterFromURL(String URL){
+    */
+    public String getChapterFromURL(String TheURL){
         //String mangaPattern = "\\/c(\\d+)";
         String mangaPattern = this.ChapterRegexPattern;            
         Pattern chapter = Pattern.compile(mangaPattern);
-        Matcher m = chapter.matcher(URL);
+        Matcher m = chapter.matcher(TheURL);
         if(m.find() && m.groupCount() > 0){
             return m.group(1);
         }
@@ -362,14 +370,14 @@ public class WebCrawler{
     }
 
     /**
-    *@url - the url to get the name from
+    *@param TheURL the url to get the name from
     *@return the book name
-    **/
-    public String getNameFromURL(String URL){
+    */
+    public String getNameFromURL(String TheURL){
         //String mangaPattern = "\\bmanga\\/(\\w+)";
         String mangaPattern = this.MangaNameRegexPattern;            
         Pattern name = Pattern.compile(mangaPattern);
-        Matcher m = name.matcher(URL);
+        Matcher m = name.matcher(TheURL);
         if(m.find() && m.groupCount() > 0){
             return m.group(1);
         }
@@ -377,63 +385,90 @@ public class WebCrawler{
     }
 
     /**
-    *to do : add method to parse url
-    * get manga name , chapter
-    * add method to fill list of links of current page
-    * get link with image in page
-    * check if link match manga name and chapter pattern, if found matching link 
-    * call method to fill list with links and get link with image in page
-    *( recursive ? pass list of links with images and 
-    *
-    *
-    *
-    *Method parameter : String URL , List of links of image
-    *Recursize
-    *methodA(String URL , List<String> ImageLinks, List<String> visitedLinks){
-    * 
-    *       append image linkj
-    *       foreach links in page
-    *          if link not in list of visited url and count < max page
-    *          if link matches pattern 
-    *          call methodA()
-    *
-    *
-    *}
-    *@param
-    *
-    *
-    *@return
-    *
-    **/
-    /**public boolean isMatchingMangaPattern(String URL){
-         String mangaPattern = "\bmanga\/(.*$)";         
-         Pattern chapter = Pattern.compile(mangaPattern);
-         Matcher  = chapter.matcher("Test");
-         if (m.find( )) {
-         }
-    }**/
-
-    /**
     *getter for links
-    **/
+    */
     public List<String> getLinks(){
         return this.WebLinks;
     }
 
     /**
-    *This method prints the input to the opened log file
-    *@param Log : The log entry to be written to the file
-    **/
-    public void PrintToLog(String Log){
+    *{rints the input to the opened log file
+    *@param TheMessage The log entry to be written to the file
+    */
+    public void PrintToLog(String TheMessage){
         if(this.LogPrinter != null){
-            this.LogPrinter.println(Log);
+            this.LogPrinter.println(TheMessage);
+        }
+        else{
+            System.out.println("Error printing log, log file not initialized. The message : " + TheMessage);
         }
     }
 
     /**
     *close writer
-    **/
+    */
     public void closeLog(){
         this.LogPrinter.close();
+    }
+
+    /**
+    *reset web crawler parameters
+    */
+    public void ResetParameters(){
+        this.WebLinks.clear();
+        this.ChosenChapterLinks.clear();
+        this.closeLog();
+        this.MangaNameRegexPattern = "";
+        this.ChapterRegexPattern = "";
+        this.PageRegexPattern = "";
+        this.CurrentMangaName = "";
+    }
+
+    /** CURRENTLY UNUSED */
+
+    /**
+    *@param pattern the regex pattern of the url to get the manga name
+    *@return the directory file to save the image
+    */
+    private String getDirFromURL(String url){
+        String finalDir = "";
+        String[] urlParts = url.split("://");
+        if(urlParts.length > 1){
+            String filePath = urlParts[1];
+            String[] dirs = filePath.split("/");
+            int i;
+            for(i=0;i< dirs.length - 1;i++){
+                finalDir += dirs[i];
+                finalDir += '/';
+            }
+            finalDir.replaceAll(".", "");
+            finalDir.replaceAll(" ", "");
+            System.out.println(finalDir);
+            this.PrintToLog(finalDir);
+            return finalDir;
+        }
+        return finalDir; 
+    }
+
+    /**
+    *@param pattern the regex pattern of the url to get the manga name and page
+    *@return the file name of the image to save
+    */
+    private String getFileNameFromURL(String url){
+        String fileName = "";
+        String[] urlParts = url.split("://");
+        if(urlParts.length > 1){
+            String filePath = urlParts[1];
+            String[] dirs = filePath.split("/");
+            int length = dirs.length;
+            fileName += dirs[length-1];
+            fileName.replaceAll("\\s+", "");
+            String[] absoluteURL = fileName.split("\\?");
+            String absFileName = absoluteURL[0];
+            System.out.println(absFileName);
+            this.PrintToLog(absFileName);
+            return absFileName;
+        }
+        return fileName; 
     }
 }

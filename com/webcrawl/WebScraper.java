@@ -10,7 +10,7 @@ public class WebScraper{
 
 	private static final int MAX_PAGES_TO_SEARCH = 20;
 	private Set<String> PagesVisited = new HashSet<String>();
-	private List<String> PagesToVisit =new LinkedList<String>();
+	private List<String> PagesToVisit = new LinkedList<String>();
     private String RootURL;
     private String StringToSearch; 
     private String LogPath;
@@ -28,8 +28,6 @@ public class WebScraper{
         //}
         //begin debug 
         scraper.runImageSearch();
-
-
     }
 
     public void runImageSearch(){
@@ -38,7 +36,10 @@ public class WebScraper{
         this.SetLogPath(consoleInput.nextLine());
         System.out.println("Enter the base URL");
         this.SetRootURL(consoleInput.nextLine());
-        WebCrawler crawler = new WebCrawler(this.LogPath);
+        WebCrawler crawler = new WebCrawler();
+
+        //Initialize the log file for the web crawler
+        crawler.InitializeLogFile(this.LogPath);
 
         crawler.SetMangaNamePattern("\\bmanga\\/(\\w+)");
         crawler.SetMangaChapterPattern("\\/c(\\d+)");
@@ -53,7 +54,7 @@ public class WebScraper{
     /**
     *Setter for log path
     *@param url : String of log path
-    **/
+    */
     public void SetLogPath(String path){
         this.LogPath = path;
     }
@@ -61,7 +62,7 @@ public class WebScraper{
     /**
     *Setter for root url to crawl
     *@param url : String of the url to crawl
-    **/
+    */
     public void SetRootURL(String url){
         this.RootURL = url;
     }
@@ -69,18 +70,15 @@ public class WebScraper{
     /**
     *Setter for word to search
     *@param word : String of  the word to search
-    **/
+    */
     public void SetStringToSeach(String word){
         this.StringToSearch = word;
     }
 
     /**
     *This method asks the user for input
-    *
-    *
     *@return boolean whether or not user correctly input the parameter
-    *
-    **/
+    */
     private boolean isUserInputValid(){
         Scanner consoleInput = new Scanner(System.in);
         System.out.println("Enter the path to the log file");
@@ -96,16 +94,13 @@ public class WebScraper{
     /**
     *Main function to launch the scraper, it creates a WebCrawler 
     *that makes the HTTP request and parse the response
-    *
-    *@param url
-    *       - the starting url
-    *@param searchWord
-    *       - the word or string to search
+    *@param url the starting url
+    *@param searchWord the word or string to search
     */
     public void RunSearch(){
     	while(this.PagesVisited.size() < MAX_PAGES_TO_SEARCH){
     		String currentUrl;
-    		WebCrawler crawler = new WebCrawler(this.LogPath);
+    		WebCrawler crawler = new WebCrawler();
             System.out.println("new crawler instance");
     		if(this.PagesToVisit.isEmpty()){
     			currentUrl = this.RootURL;
@@ -130,10 +125,7 @@ public class WebScraper{
     }
 
     /**
-    *Returns the next url to visit
-    *
-    *
-    *@return
+    *@return the next url to visit
     */
     private String nextUrl(){
     	String nextUrl;
