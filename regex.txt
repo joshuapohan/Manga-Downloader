@@ -1,0 +1,6 @@
+view-source:https://mangapark.net/manga/tomodachi-gokko-yamada-daisy/s1/c003/1
+
+\bmanga\/(.*$)
+\/c(\d+)
+
+https://regex101.com/

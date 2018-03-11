@@ -1,0 +1,4 @@
+Main-Class: com.webcrawl.WebScraper
+Class-Path: lib/jsoup-1.6.0.jar
+
+
