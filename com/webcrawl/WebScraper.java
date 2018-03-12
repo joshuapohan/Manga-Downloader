@@ -14,6 +14,7 @@ public class WebScraper{
     private String RootURL;
     private String StringToSearch; 
     private String LogPath;
+    private String DLPath;
 
     public static void main(String[] args){
     	run();
@@ -32,18 +33,27 @@ public class WebScraper{
 
     public void runImageSearch(){
         Scanner consoleInput = new Scanner(System.in);
+
+        System.out.println("Enter the download directory :");
+        this.SetDownloadPath(consoleInput.nextLine());
+
         System.out.println("Enter the path to the log file");
         this.SetLogPath(consoleInput.nextLine());
+
         System.out.println("Enter the base URL");
         this.SetRootURL(consoleInput.nextLine());
+
         WebCrawler crawler = new WebCrawler();
 
         //Initialize the log file for the web crawler
         crawler.InitializeLogFile(this.LogPath);
 
+        crawler.SetDownloadDirectory(this.DLPath);
+
         crawler.SetMangaNamePattern("\\bmanga\\/(\\w+)");
         crawler.SetMangaChapterPattern("\\/c(\\d+)");
         crawler.SetMangaPagePattern("c\\d+\\/(\\d+)");
+        crawler.SetMangaChapterLinkPattern("c\\d+\\/\\d$");
 
        if(crawler.isSearchForChaptersSuccessful(this.RootURL)){
         //if(crawler.isCrawlForImageSuccessful(this.RootURL)){
@@ -53,7 +63,7 @@ public class WebScraper{
 
     /**
     *Setter for log path
-    *@param url : String of log path
+    *@param url String of log path
     */
     public void SetLogPath(String path){
         this.LogPath = path;
@@ -61,10 +71,18 @@ public class WebScraper{
 
     /**
     *Setter for root url to crawl
-    *@param url : String of the url to crawl
+    *@param url String of the url to crawl
     */
     public void SetRootURL(String url){
         this.RootURL = url;
+    }
+
+    /**
+    *Setter for download path
+    *@param path path to file download
+    */
+    public void SetDownloadPath(String path){
+        this.DLPath = path;
     }
 
     /**

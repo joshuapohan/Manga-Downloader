@@ -28,8 +28,11 @@ public class WebCrawler{
     private String MangaNameRegexPattern;
     private String ChapterRegexPattern;
     private String PageRegexPattern;
+    private String ChapterLinkRegexPattern;
 
     private String CurrentMangaName;
+
+    private String DownloadDirectory;
     
     /** 
     *WebCrawler constructor
@@ -70,11 +73,26 @@ public class WebCrawler{
     }
 
     /**
+    *@param pattern the regex pattern of the url to check whether or not link is part of manga
+    */
+    public void SetMangaChapterLinkPattern(String pattern){
+        this.ChapterLinkRegexPattern = pattern;
+    }
+
+    /**
     *@param pattern the regex pattern of the url to get the manga name
     */
     public void SetMangaPagePattern(String pattern){
         this.PageRegexPattern = pattern;
     }
+
+    /**
+    *@param path path to download directory
+    */
+    public void SetDownloadDirectory(String path){
+        this.DownloadDirectory = path;
+    }
+
 
     /**
     *@param TheURL the link to test
@@ -144,7 +162,7 @@ public class WebCrawler{
             String fileName = this.getPageFromURL(PageURL) + ".jpg";
 
             //Use manga name and chapter as download directory
-            String fileDir = mangaName + '/' + mangaChapter;
+            String fileDir = this.DownloadDirectory + '/' + mangaName + '/' + mangaChapter;
             File fileDirectory = new File(fileDir);
 
             System.out.println(fileDir);
@@ -344,8 +362,9 @@ public class WebCrawler{
     *@return whether or not the passed link is link to chapter
     */
     public boolean isChapterLink(String TheURL){
-        //String mangaPattern = "\\/c\\d+";          
-        String chapterPattern = this.ChapterRegexPattern;
+        //String mangaPattern = "\\/c\\d+";
+        System.out.println(this.ChapterLinkRegexPattern);          
+        String chapterPattern = this.ChapterLinkRegexPattern;
         Pattern chapter = Pattern.compile(chapterPattern);
         Matcher m = chapter.matcher(TheURL);
         if(m.find()){
