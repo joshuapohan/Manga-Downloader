@@ -185,6 +185,16 @@ public class WebCrawler{
     }
 
     /**
+    *@param PageURL the root url to get links to all the chapters
+    *@return whether or not chapter dpwnload was successful
+    */
+    public boolean DownloadAllChaptersInPage(String PageURL){
+        this.isSearchForChaptersSuccessful(PageURL);
+        this.DownloadFromStoredURLList();
+        return true;
+    }
+
+    /**
     *@param TheURL the base url to search all the links to the chapters
     *@return whether or not chapter crawl was successful
     */
@@ -204,15 +214,15 @@ public class WebCrawler{
                     for(Element link : linksOnPage){
                         String absURL = link.absUrl("href");
                         if(this.isURLForMangaChapter(absURL)){
-                            System.out.println("Chapter" + absURL);
-                            this.isCrawlForImageSuccessful(absURL);
+                            //System.out.println("Chapter" + absURL);
+                            this.ChosenChapterLinks.add(absURL);
                         }
                     }
                     return true;
                 }
                 else{
                     //Debug code
-                    this.PrintToLog("**Failure** Retreived something other than HTML");
+                    //this.PrintToLog("**Failure** Retreived something other than HTML");
                     //Debug code
                     return false;
                 }
@@ -222,6 +232,21 @@ public class WebCrawler{
             return false;
         }
         return false;
+    }
+
+    /**
+    *iterates through link previously retrieved
+    *@return whether or not the retrieval was successful
+    */
+    private boolean DownloadFromStoredURLList(){
+        for(String url : this.ChosenChapterLinks){
+            this.isCrawlForImageSuccessful(url);
+            this.PrintToLog("Downloaded " + url);
+            //DEBUG CODE
+            System.out.println("Downloaded " + url);
+            //DEBUG CODE
+        }
+        return true;
     }
 
     /**
@@ -248,10 +273,10 @@ public class WebCrawler{
                     for(Element image : imagesOnPage){
                         if(this.isImageOfMangaPage(image)){
                             String imgURL = image.absUrl("src");
-                            this.PrintToLog(imgURL);
+                            //this.PrintToLog(imgURL);
                             if(this.isImageSaveSuccessful(TheURL, imgURL)){
                                 //Debug code
-                                System.out.println("\n**Succesfully Saved Image**" + imgURL);
+                                //System.out.println("\n**Succesfully Saved Image**" + imgURL);
                                 //Debug code
                             }
                         }
@@ -463,7 +488,6 @@ public class WebCrawler{
             finalDir.replaceAll(".", "");
             finalDir.replaceAll(" ", "");
             System.out.println(finalDir);
-            this.PrintToLog(finalDir);
             return finalDir;
         }
         return finalDir; 

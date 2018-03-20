@@ -55,7 +55,7 @@ public class WebScraper{
         crawler.SetMangaPagePattern("c\\d+\\/(\\d+)");
         crawler.SetMangaChapterLinkPattern("c\\d+\\/\\d$");
 
-       if(crawler.isSearchForChaptersSuccessful(this.RootURL)){
+       if(crawler.DownloadAllChaptersInPage(this.RootURL)){
         //if(crawler.isCrawlForImageSuccessful(this.RootURL)){
             crawler.closeLog();
         }
