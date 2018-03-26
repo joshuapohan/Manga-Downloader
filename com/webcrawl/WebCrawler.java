@@ -195,6 +195,42 @@ public class WebCrawler{
     }
 
     /**
+    *@param TheURL url to search the chapter links for
+    *@return chapter link successfully retrieved to list
+    */
+    public boolean RetrieveChapterLinksOnPage(String TheURL){
+        try{
+            Connection connection = Jsoup.connect(TheURL).userAgent(USER_AGENT);
+            Document htmlDoc = connection.get();
+            this.HTMLDoc = htmlDoc;
+            if(connection.response().statusCode() == 200){
+                if(connection.response().contentType().contains("text/html")){
+
+                    this.CurrentMangaName = this.getNameFromURL(TheURL);
+
+                    //Begin searching for next page of the current chapter
+                    Elements linksOnPage = htmlDoc.select("a[href]");
+
+                    for(Element link : linksOnPage){
+                        String absURL = link.absUrl("href");
+                        if(this.isURLForMangaChapter(absURL)){
+                            this.ChosenChapterLinks.add(absURL);
+                        }
+                    }
+                    return true;
+                }
+                else{
+                    return false;
+                }
+            }
+        }
+        catch(IOException ex){
+            return false;
+        }
+        return false;
+    }
+
+    /**
     *@param TheURL the base url to search all the links to the chapters
     *@return whether or not chapter crawl was successful
     */

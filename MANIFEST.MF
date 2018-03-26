@@ -1,4 +1,4 @@
 Main-Class: com.webcrawl.WebScraper
-Class-Path: lib/jsoup-1.6.0.jar
+Class-Path: lib/jsoup-1.6.0.jar lib/sqlite-jdbc-3.21.0.jar
 
 

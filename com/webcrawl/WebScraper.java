@@ -31,6 +31,12 @@ public class WebScraper{
         scraper.runImageSearch();
     }
 
+    public void StoreMangaReferenceInDB(){
+        WebCrawler crawler = new WebCrawler();
+        MangaDatabase mangaDB = new MangaDatabase();
+        mangaDB.GenerateTable();
+    }
+
     public void runImageSearch(){
         Scanner consoleInput = new Scanner(System.in);
 
@@ -56,7 +62,6 @@ public class WebScraper{
         crawler.SetMangaChapterLinkPattern("c\\d+\\/\\d$");
 
        if(crawler.DownloadAllChaptersInPage(this.RootURL)){
-        //if(crawler.isCrawlForImageSuccessful(this.RootURL)){
             crawler.closeLog();
         }
     }
