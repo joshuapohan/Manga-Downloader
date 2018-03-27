@@ -15,6 +15,8 @@ public class WebScraper{
     private String StringToSearch; 
     private String LogPath;
     private String DLPath;
+    private WebCrawler crawler;
+    private MangaDatabase MangaDB;
 
     public static void main(String[] args){
     	run();
@@ -28,13 +30,40 @@ public class WebScraper{
         //    scraper.RunSearch();
         //}
         //begin debug 
-        scraper.runImageSearch();
+        //scraper.runImageSearch();
+        scraper.StoreMangaReferenceInDB();
+    }
+
+    private void SetUpCrawler(){
+        this.crawler.InitializeLogFile("testy.txt");
+        this.crawler.SetMangaNamePattern("\\bmanga\\/(\\w+)");
+        this.crawler.SetMangaChapterPattern("\\/c(\\d+)");
+        this.crawler.SetMangaPagePattern("c\\d+\\/(\\d+)");
+        this.crawler.SetMangaChapterLinkPattern("c\\d+\\/\\d$");
     }
 
     public void StoreMangaReferenceInDB(){
         WebCrawler crawler = new WebCrawler();
+        this.crawler = crawler;
+        this.SetUpCrawler();
         MangaDatabase mangaDB = new MangaDatabase();
+        this.MangaDB = mangaDB;
         mangaDB.GenerateTable();
+        this.StoreMangaInfoFromURL("https://mangapark.net/manga/volcanic-age-tomato");
+    }
+
+    public void StoreMangaInfoFromURL(String TheURL){
+        if(this.crawler != null){
+            String mangaName = this.crawler.getNameFromURL(TheURL);
+            String mangaChapter = "1";
+            String IsCompleted = "False";
+
+            if(this.MangaDB != null){
+                if(this.MangaDB.InsertMangaRow(mangaName, mangaName, mangaChapter, IsCompleted, TheURL)){
+
+                }
+            }
+        }
     }
 
     public void runImageSearch(){
