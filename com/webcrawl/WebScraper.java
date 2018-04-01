@@ -30,8 +30,8 @@ public class WebScraper{
         //    scraper.RunSearch();
         //}
         //begin debug 
-        //scraper.runImageSearch();
-        scraper.StoreMangaReferenceInDB();
+        scraper.runImageSearch();
+        //scraper.StoreMangaReferenceInDB();
     }
 
     private void SetUpCrawler(){

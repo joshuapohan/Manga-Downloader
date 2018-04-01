@@ -3,6 +3,9 @@ package com.webcrawl;
 import java.io.*;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Iterator;
 
 import org.jsoup.Connection;
 import org.jsoup.Connection.Response;
@@ -33,6 +36,8 @@ public class WebCrawler{
     private String CurrentMangaName;
 
     private String DownloadDirectory;
+
+    private HashMap<String,String> ChapterLinksHashMap = new HashMap<>();
     
     /** 
     *WebCrawler constructor
@@ -190,7 +195,9 @@ public class WebCrawler{
     */
     public boolean DownloadAllChaptersInPage(String PageURL){
         this.isSearchForChaptersSuccessful(PageURL);
-        this.DownloadFromStoredURLList();
+        //DEBUG disable
+        //this.DownloadFromStoredURLList();
+        this.PrintChapterHashMap();
         return true;
     }
 
@@ -252,6 +259,14 @@ public class WebCrawler{
                         if(this.isURLForMangaChapter(absURL)){
                             //System.out.println("Chapter" + absURL);
                             this.ChosenChapterLinks.add(absURL);
+                            String curChapter = this.getChapterFromURL(absURL);
+                            if(curChapter.length() >  0){
+                                if(this.ChapterLinksHashMap != null){
+                                    if(!this.ChapterLinksHashMap.containsKey(curChapter)){
+                                        this.ChapterLinksHashMap.put(curChapter,absURL);
+                                    }
+                                }
+                            }
                         }
                     }
                     return true;
@@ -270,6 +285,23 @@ public class WebCrawler{
         return false;
     }
 
+
+    /**
+    *Print hash map key and value to log
+    */
+    private boolean PrintChapterHashMap(){
+        if(this.ChapterLinksHashMap != null && this.ChapterLinksHashMap.size() > 0){
+            if(this.LogPrinter != null){
+                Iterator<Map.Entry<String,String>> hashIt  = this.ChapterLinksHashMap.entrySet().iterator();
+                while(hashIt.hasNext()){
+                    Map.Entry<String,String> curChEntry = hashIt.next();
+                    this.PrintToLog(curChEntry.getKey() + "," + curChEntry.getValue());
+                }
+                return true;
+            }
+        }
+        return false;
+    }
     /**
     *iterates through link previously retrieved
     *@return whether or not the retrieval was successful
@@ -408,7 +440,6 @@ public class WebCrawler{
     *@return the chapter
     */
     public String getPageFromURL(String TheURL){
-        //String mangaPattern = "c\\d+\\/(\\d+)";
         String pagePattern = this.PageRegexPattern;         
         Pattern page = Pattern.compile(pagePattern);
         Matcher m = page.matcher(TheURL);
@@ -423,7 +454,6 @@ public class WebCrawler{
     *@return whether or not the passed link is link to chapter
     */
     public boolean isChapterLink(String TheURL){
-        //String mangaPattern = "\\/c\\d+";
         System.out.println(this.ChapterLinkRegexPattern);          
         String chapterPattern = this.ChapterLinkRegexPattern;
         Pattern chapter = Pattern.compile(chapterPattern);
@@ -439,7 +469,6 @@ public class WebCrawler{
     *@return the chapter
     */
     public String getChapterFromURL(String TheURL){
-        //String mangaPattern = "\\/c(\\d+)";
         String mangaPattern = this.ChapterRegexPattern;            
         Pattern chapter = Pattern.compile(mangaPattern);
         Matcher m = chapter.matcher(TheURL);
@@ -454,7 +483,6 @@ public class WebCrawler{
     *@return the book name
     */
     public String getNameFromURL(String TheURL){
-        //String mangaPattern = "\\bmanga\\/(\\w+)";
         String mangaPattern = this.MangaNameRegexPattern;            
         Pattern name = Pattern.compile(mangaPattern);
         Matcher m = name.matcher(TheURL);
@@ -502,52 +530,6 @@ public class WebCrawler{
         this.ChapterRegexPattern = "";
         this.PageRegexPattern = "";
         this.CurrentMangaName = "";
-    }
-
-    /** CURRENTLY UNUSED */
-
-    /**
-    *@param pattern the regex pattern of the url to get the manga name
-    *@return the directory file to save the image
-    */
-    private String getDirFromURL(String url){
-        String finalDir = "";
-        String[] urlParts = url.split("://");
-        if(urlParts.length > 1){
-            String filePath = urlParts[1];
-            String[] dirs = filePath.split("/");
-            int i;
-            for(i=0;i< dirs.length - 1;i++){
-                finalDir += dirs[i];
-                finalDir += '/';
-            }
-            finalDir.replaceAll(".", "");
-            finalDir.replaceAll(" ", "");
-            System.out.println(finalDir);
-            return finalDir;
-        }
-        return finalDir; 
-    }
-
-    /**
-    *@param pattern the regex pattern of the url to get the manga name and page
-    *@return the file name of the image to save
-    */
-    private String getFileNameFromURL(String url){
-        String fileName = "";
-        String[] urlParts = url.split("://");
-        if(urlParts.length > 1){
-            String filePath = urlParts[1];
-            String[] dirs = filePath.split("/");
-            int length = dirs.length;
-            fileName += dirs[length-1];
-            fileName.replaceAll("\\s+", "");
-            String[] absoluteURL = fileName.split("\\?");
-            String absFileName = absoluteURL[0];
-            System.out.println(absFileName);
-            this.PrintToLog(absFileName);
-            return absFileName;
-        }
-        return fileName; 
+        this.ChapterLinksHashMap.clear();
     }
 }
