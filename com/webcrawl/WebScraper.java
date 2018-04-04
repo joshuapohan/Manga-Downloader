@@ -90,9 +90,12 @@ public class WebScraper{
         crawler.SetMangaPagePattern("c\\d+\\/(\\d+)");
         crawler.SetMangaChapterLinkPattern("c\\d+\\/\\d$");
 
-       if(crawler.DownloadAllChaptersInPage(this.RootURL)){
-            crawler.closeLog();
-        }
+        crawler.isSearchForChaptersSuccessful(this.RootURL);
+        System.out.println("Enter chapter to download");
+        crawler.DownloadSelectedChapter(consoleInput.nextLine());
+       //if(crawler.DownloadAllChaptersInPage(this.RootURL)){
+        crawler.closeLog();
+       //}
     }
 
     /**

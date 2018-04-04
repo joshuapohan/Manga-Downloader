@@ -285,6 +285,23 @@ public class WebCrawler{
         return false;
     }
 
+    /**
+    *Download chapter
+    *@param TheChapter string of chapter number
+    *@return if chapter is found and succesffully downloaded
+    */
+    public boolean DownloadSelectedChapter(String TheChapter){
+        if(this.ChapterLinksHashMap != null && this.ChapterLinksHashMap.size() > 0){
+            if(this.ChapterLinksHashMap.containsKey(TheChapter)){
+                this.PrintToLog("Chapter Found");
+                String ChapterURL = this.ChapterLinksHashMap.get(TheChapter);
+                this.isCrawlForImageSuccessful(ChapterURL);
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     /**
     *Print hash map key and value to log
