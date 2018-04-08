@@ -32,6 +32,7 @@ public class WebCrawler{
     private String ChapterRegexPattern;
     private String PageRegexPattern;
     private String ChapterLinkRegexPattern;
+    private String UserInputChapterRegexPattern;
 
     private String CurrentMangaName;
 
@@ -61,6 +62,10 @@ public class WebCrawler{
         catch(IOException ex){
             System.out.println(ex);
         }        
+    }
+
+    public void SetUserInputPattern(String pattern){
+        this.UserInputChapterRegexPattern = pattern;
     }
 
     /**
@@ -195,47 +200,11 @@ public class WebCrawler{
     */
     public boolean DownloadAllChaptersInPage(String PageURL){
         this.isSearchForChaptersSuccessful(PageURL);
-        //DEBUG disable
         //this.DownloadFromStoredURLList();
         this.PrintChapterHashMap();
         return true;
     }
 
-    /**
-    *@param TheURL url to search the chapter links for
-    *@return chapter link successfully retrieved to list
-    */
-    public boolean RetrieveChapterLinksOnPage(String TheURL){
-        try{
-            Connection connection = Jsoup.connect(TheURL).userAgent(USER_AGENT);
-            Document htmlDoc = connection.get();
-            this.HTMLDoc = htmlDoc;
-            if(connection.response().statusCode() == 200){
-                if(connection.response().contentType().contains("text/html")){
-
-                    this.CurrentMangaName = this.getNameFromURL(TheURL);
-
-                    //Begin searching for next page of the current chapter
-                    Elements linksOnPage = htmlDoc.select("a[href]");
-
-                    for(Element link : linksOnPage){
-                        String absURL = link.absUrl("href");
-                        if(this.isURLForMangaChapter(absURL)){
-                            this.ChosenChapterLinks.add(absURL);
-                        }
-                    }
-                    return true;
-                }
-                else{
-                    return false;
-                }
-            }
-        }
-        catch(IOException ex){
-            return false;
-        }
-        return false;
-    }
 
     /**
     *@param TheURL the base url to search all the links to the chapters
@@ -257,7 +226,6 @@ public class WebCrawler{
                     for(Element link : linksOnPage){
                         String absURL = link.absUrl("href");
                         if(this.isURLForMangaChapter(absURL)){
-                            //System.out.println("Chapter" + absURL);
                             this.ChosenChapterLinks.add(absURL);
                             String curChapter = this.getChapterFromURL(absURL);
                             if(curChapter.length() >  0){
@@ -272,9 +240,7 @@ public class WebCrawler{
                     return true;
                 }
                 else{
-                    //Debug code
-                    //this.PrintToLog("**Failure** Retreived something other than HTML");
-                    //Debug code
+                    this.PrintToLog("**Failure** Retreived something other than HTML");
                     return false;
                 }
             }
@@ -282,6 +248,30 @@ public class WebCrawler{
         catch(IOException ex){
             return false;
         }
+        return false;
+    }
+
+    /**
+    *Parse user input to get the selected chapter to download
+    *@return successfully parsed the input and downloaded the chapters
+    */
+    public boolean DownloadSelectedChapters(String ChToDownload){
+        int chapterCount = 0;
+        String patternString = this.UserInputChapterRegexPattern;            
+        Pattern chPattern = Pattern.compile(patternString);
+        Matcher m = chPattern.matcher(ChToDownload);
+        if(!ChToDownload.equals("all")){
+            while(m.find()){
+                if(this.DownloadSelectedChapter(m.group())){
+                    chapterCount++;
+                }
+            }
+            System.out.println("Downloaded " + chapterCount + " chapters");
+        }
+        else{
+            return this.DownloadFromStoredURLList();
+        }
+
         return false;
     }
 
@@ -304,15 +294,15 @@ public class WebCrawler{
 
 
     /**
-    *Print hash map key and value to log
+    *Print hash map key and value to command line
     */
-    private boolean PrintChapterHashMap(){
+    public boolean PrintChapterHashMap(){
         if(this.ChapterLinksHashMap != null && this.ChapterLinksHashMap.size() > 0){
             if(this.LogPrinter != null){
                 Iterator<Map.Entry<String,String>> hashIt  = this.ChapterLinksHashMap.entrySet().iterator();
                 while(hashIt.hasNext()){
                     Map.Entry<String,String> curChEntry = hashIt.next();
-                    this.PrintToLog(curChEntry.getKey() + "," + curChEntry.getValue());
+                    System.out.println(curChEntry.getKey() + "," + curChEntry.getValue());
                 }
                 return true;
             }

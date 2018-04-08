@@ -50,7 +50,7 @@ public class MangaDatabase{
 			try{
 				this.DBConnection.setAutoCommit(false);
 				String sql  = "INSERT INTO MANGA (ID, NAME, CHAPTER, COMPLETED, URL) " +
-								"VALUES ('" + ID + "','" + MangaName + "','" + LatestChapter + "','" + IsCompleted +  "','" + MangaURL + "');";
+								"VALUES (' " + ID + "','" + MangaName + "','" + LatestChapter + "','" + IsCompleted +  "','" + MangaURL + "');";
 				System.out.println(sql);
 				this.GlobalStmt.executeUpdate(sql);
 				DBConnection.commit();

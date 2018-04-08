@@ -30,7 +30,7 @@ public class WebScraper{
         //    scraper.RunSearch();
         //}
         //begin debug 
-        scraper.runImageSearch();
+        scraper.RunMangaDownloader();
         //scraper.StoreMangaReferenceInDB();
     }
 
@@ -66,7 +66,7 @@ public class WebScraper{
         }
     }
 
-    public void runImageSearch(){
+    public void RunMangaDownloader(){
         Scanner consoleInput = new Scanner(System.in);
 
         System.out.println("Enter the download directory :");
@@ -89,13 +89,18 @@ public class WebScraper{
         crawler.SetMangaChapterPattern("\\/c(\\d+)");
         crawler.SetMangaPagePattern("c\\d+\\/(\\d+)");
         crawler.SetMangaChapterLinkPattern("c\\d+\\/\\d$");
+        crawler.SetUserInputPattern("\\d+");
+        
+        if(crawler.isSearchForChaptersSuccessful(this.RootURL)){
+            System.out.println("List of chapters :");
+            crawler.PrintChapterHashMap();
+            System.out.println("Enter chapter to download (Format : ddd)");
+            crawler.DownloadSelectedChapters(consoleInput.nextLine());
+            //if(crawler.DownloadAllChaptersInPage(this.RootURL)){
+            crawler.closeLog();
+            //}
+        }
 
-        crawler.isSearchForChaptersSuccessful(this.RootURL);
-        System.out.println("Enter chapter to download");
-        crawler.DownloadSelectedChapter(consoleInput.nextLine());
-       //if(crawler.DownloadAllChaptersInPage(this.RootURL)){
-        crawler.closeLog();
-       //}
     }
 
     /**
