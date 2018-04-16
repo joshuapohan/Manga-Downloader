@@ -25,7 +25,7 @@ public class WebCrawler{
     //HTML Document from jsoup connection get
     private Document HTMLDoc;
     //The writer for the lgo
-    public PrintWriter LogPrinter;
+    public PrintWriter LogPrinter; 
 
     private String MangaNameRegexPattern;
     private String ChapterRegexPattern;

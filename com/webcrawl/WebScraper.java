@@ -13,7 +13,7 @@ public class WebScraper{
 	private List<String> PagesToVisit = new LinkedList<String>();
     private String RootURL;
     private String StringToSearch; 
-    private String LogPath;
+    private String LogPath; 
     private String DLPath;
     private WebCrawler crawler;
     private MangaDatabase MangaDB;
