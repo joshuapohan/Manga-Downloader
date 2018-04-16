@@ -22,7 +22,6 @@ public class WebCrawler{
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1";
     //List to hold all the links in the document
     private List<String> WebLinks = new LinkedList<String>();
-    private List<String> ChosenChapterLinks = new LinkedList<String>();
     //HTML Document from jsoup connection get
     private Document HTMLDoc;
     //The writer for the lgo
@@ -105,6 +104,7 @@ public class WebCrawler{
 
 
     /**
+    *check whether or not the passed url contains manga name and is link to chapter
     *@param TheURL the link to test
     *@param MangaName the manga name
     *@return whether or not the url is the link to the mange chapter
@@ -117,6 +117,7 @@ public class WebCrawler{
     }
 
     /**
+    *Check whether or not passed url is part of manga next page url
     *@param BaseURL the link to test
     *@return whether or not the url is the link to the next page in the chapter
     */
@@ -158,15 +159,9 @@ public class WebCrawler{
     /**
     *@param PageURL the current page URL to get the current chapter and page
     *@param ImgURL the absolute url to the image to be saved
-    *@param MangaName Manga name as folder name
-    *@param Chapter Chapter number as folder name
     */
     public boolean isImageSaveSuccessful(String PageURL, String ImgURL){
         try{
-            //String fileName = this.getFileNameFromURL(ImgURL);
-            //String fileDir = this.getDirFromURL(ImgURL);
-
-            //String mangaName = this.getNameFromURL(PageURL);
             String mangaName = this.CurrentMangaName;
             String mangaChapter = this.getChapterFromURL(PageURL);
             String fileName = this.getPageFromURL(PageURL) + ".jpg";
@@ -200,7 +195,7 @@ public class WebCrawler{
     */
     public boolean DownloadAllChaptersInPage(String PageURL){
         this.isSearchForChaptersSuccessful(PageURL);
-        //this.DownloadFromStoredURLList();
+        this.DownloadFromStoredURLList();
         this.PrintChapterHashMap();
         return true;
     }
@@ -226,7 +221,6 @@ public class WebCrawler{
                     for(Element link : linksOnPage){
                         String absURL = link.absUrl("href");
                         if(this.isURLForMangaChapter(absURL)){
-                            this.ChosenChapterLinks.add(absURL);
                             String curChapter = this.getChapterFromURL(absURL);
                             if(curChapter.length() >  0){
                                 if(this.ChapterLinksHashMap != null){
@@ -234,13 +228,20 @@ public class WebCrawler{
                                         this.ChapterLinksHashMap.put(curChapter,absURL);
                                     }
                                 }
+                                else{
+                                    this.PrintToLog("**Error** Chapter links not initialized");
+                                    return false;
+                                }
+                            }
+                            else{
+                                this.PrintToLog("**Error** Failed to get chapter from URL " + absURL);
                             }
                         }
                     }
                     return true;
                 }
                 else{
-                    this.PrintToLog("**Failure** Retreived something other than HTML");
+                    this.PrintToLog("**Error** Retrieved something other than HTML");
                     return false;
                 }
             }
@@ -295,6 +296,7 @@ public class WebCrawler{
 
     /**
     *Print hash map key and value to command line
+    *@return if hash map succesfully printed
     */
     public boolean PrintChapterHashMap(){
         if(this.ChapterLinksHashMap != null && this.ChapterLinksHashMap.size() > 0){
@@ -303,6 +305,7 @@ public class WebCrawler{
                 while(hashIt.hasNext()){
                     Map.Entry<String,String> curChEntry = hashIt.next();
                     System.out.println(curChEntry.getKey() + "," + curChEntry.getValue());
+                    this.LogPrinter.println(curChEntry.getKey() + "," + curChEntry.getValue());
                 }
                 return true;
             }
@@ -314,14 +317,18 @@ public class WebCrawler{
     *@return whether or not the retrieval was successful
     */
     private boolean DownloadFromStoredURLList(){
-        for(String url : this.ChosenChapterLinks){
-            this.isCrawlForImageSuccessful(url);
-            this.PrintToLog("Downloaded " + url);
-            //DEBUG CODE
-            System.out.println("Downloaded " + url);
-            //DEBUG CODE
+        if(this.ChapterLinksHashMap != null && this.ChapterLinksHashMap.size() > 0){
+            if(this.LogPrinter != null){
+                Iterator<Map.Entry<String,String>> hashIt  = this.ChapterLinksHashMap.entrySet().iterator();
+                while(hashIt.hasNext()){
+                    Map.Entry<String,String> curChEntry = hashIt.next();
+                    this.isCrawlForImageSuccessful(curChEntry.getValue());
+                    this.PrintToLog("Downloaded " + curChEntry.getValue());
+                }
+                return true;
+            }
         }
-        return true;
+        return false;
     }
 
     /**
@@ -356,9 +363,8 @@ public class WebCrawler{
                             }
                         }
                     }
-
                     /**
-                    *Begin searching for next page of the current chapter
+                    *Begin searching for next page of the currnt chapter
                     */
                     Elements linksOnPage = htmlDoc.select("a[href]");
 
@@ -375,7 +381,6 @@ public class WebCrawler{
                             break;
                         }
                     }
-
                     return true;
                 }
                 else{
@@ -530,8 +535,6 @@ public class WebCrawler{
     *reset web crawler parameters
     */
     public void ResetParameters(){
-        this.WebLinks.clear();
-        this.ChosenChapterLinks.clear();
         this.closeLog();
         this.MangaNameRegexPattern = "";
         this.ChapterRegexPattern = "";
